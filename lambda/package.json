@@ -1,0 +1,27 @@
+{
+  "name": "nr8-lambda-packages",
+  "version": "1.0.0",
+  "description": "Tasks to build NR8 Lambda packages and to deploy them to AWS.",
+  "main": "Gruntfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/AccelrousLLC/analytics.git"
+  },
+  "keywords": [
+    "AWS",
+    "Lambda"
+  ],
+  "author": "Richard Clayton, Srinivas Rao, Arnaud Courbiere",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AccelrousLLC/analytics/issues"
+  },
+  "homepage": "https://github.com/AccelrousLLC/analytics#readme",
+  "dependencies": {
+    "grunt": "^0.4.5",
+    "grunt-cli": "^0.1.13"
+  }
+}

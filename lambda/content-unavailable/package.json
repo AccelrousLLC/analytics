@@ -1,0 +1,33 @@
+{
+  "name": "nr8-analytics-content-unavailable",
+  "version": "1.0.0",
+  "description": "Lambda function for handling unavailable YouTube content.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/AccelrousLLC/analytics.git"
+  },
+  "keywords": [
+    "Analytics",
+    "YouTube"
+  ],
+  "author": "Richard Clayton, Srinivas Rao, Arnaud Courbiere",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AccelrousLLC/analytics/issues"
+  },
+  "homepage": "https://github.com/AccelrousLLC/analytics#readme",
+  "devDependencies": {
+    "chai": "^3.4.1",
+    "mocha": "^2.3.3"
+  },
+  "dependencies": {
+    "async": "^1.5.0",
+    "bluebird": "^3.0.5",
+    "lodash": "^3.10.1",
+    "request": "^2.65.0"
+  }
+}

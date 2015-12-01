@@ -1,0 +1,23 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1448747307041
+Build-Jdk: 1.8.0_45
+Built-By: rclayton
+Bundle-ManifestVersion: 2
+Bundle-Name: CDAP Spark Java App Project
+Bundle-SymbolicName: com.nr8.analytics.r8port.spark
+Bundle-Version: 1.0.0.SNAPSHOT
+Created-By: Apache Maven Bundle Plugin
+Embed-Dependency: *;inline=false;scope=compile
+Embed-Directory: lib
+Embed-Transitive: true
+Export-Package: com.nr8.analytics.r8port;uses:="org.slf4j,org.apache.spa
+ rk.api.java.function,org.apache.spark.streaming.kinesis,com.amazonaws.s
+ ervices.kinesis.clientlibrary.lib.worker,org.apache.spark.storage,org.a
+ pache.spark.streaming.api.java,org.apache.spark,org.apache.spark.stream
+ ing";version="1.0.0.SNAPSHOT"
+Import-Package: com.amazonaws.services.kinesis.clientlibrary.lib.worker,
+ org.apache.spark,org.apache.spark.api.java.function,org.apache.spark.st
+ orage,org.apache.spark.streaming,org.apache.spark.streaming.api.java,or
+ g.apache.spark.streaming.kinesis,org.slf4j;version="[1.7,2)"
+Main-Class: com.nr8.analytics.r8port.SparkPageRankApp
+Tool: Bnd-1.50.0

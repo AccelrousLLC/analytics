@@ -9,7 +9,7 @@ public class R8port implements Serializable {
 
   private String recordId;
   private DateTime timestamp;
-  private float timeSincePageload;
+  private double timeSincePageload;
   private String component;
   private String sid;
   private String username;
@@ -25,7 +25,7 @@ public class R8port implements Serializable {
     return timestamp;
   }
 
-  public float getTimeSincePageload() {
+  public double getTimeSincePageload() {
     return timeSincePageload;
   }
 
@@ -51,6 +51,42 @@ public class R8port implements Serializable {
 
   public JsonObject getEventData() {
     return eventData;
+  }
+
+  public void setRecordId(String recordId) {
+    this.recordId = recordId;
+  }
+
+  public void setTimestamp(DateTime timestamp) {
+    this.timestamp = timestamp;
+  }
+
+  public void setTimeSincePageload(double timeSincePageload) {
+    this.timeSincePageload = timeSincePageload;
+  }
+
+  public void setComponent(String component) {
+    this.component = component;
+  }
+
+  public void setSid(String sid) {
+    this.sid = sid;
+  }
+
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
+  public void setUserAgent(String userAgent) {
+    this.userAgent = userAgent;
+  }
+
+  public void setReportDate(DateTime reportDate) {
+    this.reportDate = reportDate;
+  }
+
+  public void setEventData(JsonObject eventData) {
+    this.eventData = eventData;
   }
 
   @Override

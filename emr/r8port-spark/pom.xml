@@ -20,6 +20,7 @@
     <guava.version>13.0.1</guava.version>
     <gson.version>2.2.4</gson.version>
     <hadoop.version>2.3.0</hadoop.version>
+    <aws.version>1.10.0</aws.version>
   </properties>
 
   <repositories>
@@ -209,6 +210,17 @@
         <exclusion>
           <artifactId>slf4j-api</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <artifactId>aws-java-sdk-dynamodb</artifactId>
+      <groupId>com.amazonaws</groupId>
+      <version>${aws.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
         </exclusion>
       </exclusions>
     </dependency>

@@ -1,10 +1,12 @@
 package com.nr8.analytics.r8port;
 
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker.InitialPositionInStream;
+import com.clearspring.analytics.util.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.nr8.analytics.r8port.services.dynamo.DynamoR8portStorageService;
 import kafka.serializer.StringDecoder;
 import org.apache.spark.*;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -21,32 +23,21 @@ import scala.Tuple2;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public class SparkAppLoadReports {
 
   private static final Logger logger = LoggerFactory.getLogger(SparkAppLoadReports.class);
 
   public static final String APP_NAME = "R8portLoader";
-  public static final Gson gson = getDeserializer();
 
   public static void main(String[] args){
 
     String clusterMode = (args.length > 0 && args[0].isEmpty())? args[0] : "local[4]";
 
-    String kinesisStream = System.getenv("KINESIS_STREAM");
-
-    if (kinesisStream == null || kinesisStream.isEmpty()) kinesisStream = "user_activity_development";
-
     SparkConf conf = new SparkConf().setMaster(clusterMode).setAppName(APP_NAME);
 
     JavaStreamingContext streamingContext = new JavaStreamingContext(conf, Durations.seconds(2));
-
-    /*
-     JavaPairReceiverInputDStream<String, String> directKafkaStream =
-     KafkaUtils.createDirectStream(streamingContext,
-         [key class], [value class], [key decoder class], [value decoder class],
-         [map of Kafka parameters], [set of topics to consume]);
-    */
 
     HashSet<String> topicsSet = Sets.newHashSet();
 
@@ -61,42 +52,26 @@ public class SparkAppLoadReports {
             streamingContext,
             String.class, String.class, StringDecoder.class, StringDecoder.class, kafkaParams, topicsSet);
 
-    //r8ports.groupByKey().count().print();
-
-    r8ports.map(new Function<Tuple2<String,String>, Object>() {
+    r8ports
+        .groupByKey()
+        .map(new Function<Tuple2<String,Iterable<String>>, Object>() {
       @Override
-      public Object call(Tuple2<String, String> keyAndValue) throws Exception {
+      public Object call(Tuple2<String,Iterable<String>> keyAndValue) throws Exception {
 
-        R8port r8port = null;
+        DynamoR8portStorageService storageService = new DynamoR8portStorageService();
 
-        try {
-          r8port = gson.fromJson(keyAndValue._2(), R8port.class);
-        } catch (Exception e){
-          logger.error("Could not deserialize r8port payload: {}", e);
+        List<R8port> r8portList = Lists.newArrayList();
+
+        for (String serializeR8port : keyAndValue._2()){
+          R8port r8port = JsonUtils.deserialize(serializeR8port, R8port.class);
+          r8portList.add(r8port);
         }
 
-        return keyAndValue._2();
+        storageService.appendToStorage(r8portList);
+        
+        return keyAndValue._1();
       }
     }).print();
-
-//    JavaReceiverInputDStream<byte[]> r8ports = KinesisUtils.createStream(
-//        streamingContext,
-//        APP_NAME,
-//        kinesisStream,
-//        KINESIS_ENDPOINT,
-//        KINESIS_AWS_REGION,
-//        InitialPositionInStream.LATEST,
-//        Durations.seconds(2),
-//        StorageLevel.MEMORY_AND_DISK_2()
-//    );
-//
-//    r8ports.map(new Function<byte[], Object>() {
-//      @Override
-//      public Object call(byte[] v1) throws Exception {
-//        logger.info("Got a record on the Kinesis stream.");
-//        return true;
-//      }
-//    }).print();
 
     streamingContext.start();
 

@@ -1,9 +1,6 @@
 package com.nr8.analytics.r8port;
 
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import org.joda.time.DateTime;
 import org.junit.Test;
 
 public class DateTimeDeserializerTest {
@@ -15,11 +12,7 @@ public class DateTimeDeserializerTest {
   @Test
   public void test_parse_datetime_as_object_property(){
 
-    GsonBuilder gsonBuilder = new GsonBuilder();
-    gsonBuilder.registerTypeAdapter(DateTime.class, new DateTimeDeserializer());
-    Gson gson = gsonBuilder.create();
-
-    R8port r8port = gson.fromJson(TEST_JSON, R8port.class);
+    R8port r8port = JsonUtils.deserialize(TEST_JSON, R8port.class);
 
     System.out.println(r8port);
   }

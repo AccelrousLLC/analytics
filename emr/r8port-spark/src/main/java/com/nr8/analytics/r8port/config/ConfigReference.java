@@ -38,7 +38,7 @@ public class ConfigReference<T> implements Serializable {
     this.key = key;
   }
 
-  public Optional<T> get(Class<T> clazz){
+  public Optional<T> load(Class<T> clazz){
     if (cachedInstance != null) return cachedInstance;
     try {
       ConfigLoader loader = ConfigLoaderFactory.getLoader(this.uri).get();

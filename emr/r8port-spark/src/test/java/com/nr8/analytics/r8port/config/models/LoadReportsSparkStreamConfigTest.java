@@ -21,7 +21,7 @@ public class LoadReportsSparkStreamConfigTest {
 
     assertTrue(config.isPresent());
 
-    Optional<KafkaConfig> kafka = config.get().getKafka().get(KafkaConfig.class);
+    Optional<KafkaConfig> kafka = config.get().getKafka().load(KafkaConfig.class);
 
     assertTrue(kafka.isPresent());
 

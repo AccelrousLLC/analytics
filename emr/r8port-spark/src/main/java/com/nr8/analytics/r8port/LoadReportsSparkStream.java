@@ -9,10 +9,8 @@ import com.nr8.analytics.r8port.config.models.DynamoConfig;
 import com.nr8.analytics.r8port.config.models.KafkaConfig;
 import com.nr8.analytics.r8port.config.models.LoadReportsSparkStreamConfig;
 import com.nr8.analytics.r8port.services.dynamo.DynamoR8portStorageService;
-import kafka.Kafka;
 import kafka.admin.AdminUtils;
 import kafka.serializer.StringDecoder;
-import kafka.utils.ZKStringSerializer;
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.function.Function;
@@ -41,7 +39,7 @@ public class LoadReportsSparkStream {
     JavaStreamingContext streamingContext =
         new JavaStreamingContext(conf, Durations.seconds(config.getBatchingWindow()));
 
-    KafkaConfig kafkaConfig = config.getKafka().get(KafkaConfig.class).get();
+    KafkaConfig kafkaConfig = config.getKafka().load(KafkaConfig.class).get();
 
     createKafkaTopic(kafkaConfig);
 
@@ -65,7 +63,7 @@ public class LoadReportsSparkStream {
       public Object call(Tuple2<String,Iterable<String>> keyAndValue) throws Exception {
 
         DynamoR8portStorageService storageService =
-            new DynamoR8portStorageService(config.getDynamo().get(DynamoConfig.class).get());
+            new DynamoR8portStorageService(config.getDynamo().load(DynamoConfig.class).get());
 
         List<R8port> r8portList = Lists.newArrayList();
 

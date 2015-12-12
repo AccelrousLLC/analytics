@@ -3,6 +3,7 @@ package com.nr8.analytics.r8port.services.dynamo;
 import com.clearspring.analytics.util.Lists;
 import com.google.gson.JsonObject;
 import com.nr8.analytics.r8port.R8port;
+import com.nr8.analytics.r8port.config.models.DynamoConfig;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -17,7 +18,12 @@ public class DynamoR8portStorageServiceTest {
   @Test
   public void testPutRecords() throws Exception {
 
-    DynamoR8portStorageService storageService = new DynamoR8portStorageService();
+    DynamoConfig config = new DynamoConfig();
+
+    config.setEndpoint("dynamodb.us-west-2.amazonaws.com");
+    config.setTable("r8ports-development");
+
+    DynamoR8portStorageService storageService = new DynamoR8portStorageService(config);
 
     R8port r8port = new R8port();
 

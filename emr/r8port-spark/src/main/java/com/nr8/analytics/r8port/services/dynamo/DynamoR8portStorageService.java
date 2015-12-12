@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import com.nr8.analytics.r8port.JsonUtils;
 import com.nr8.analytics.r8port.R8port;
 import com.nr8.analytics.r8port.SessionLog;
+import com.nr8.analytics.r8port.config.models.DynamoConfig;
 import com.nr8.analytics.r8port.services.R8portStorageService;
 
 import java.util.List;
@@ -17,13 +18,13 @@ import java.util.concurrent.Future;
 
 public class DynamoR8portStorageService implements R8portStorageService {
 
-  public static final String DYNAMO_TABLE = "r8ports-development";
-
   protected AmazonDynamoDBAsyncClient client;
+  protected String table;
 
-  public DynamoR8portStorageService(){
+  public DynamoR8portStorageService(DynamoConfig config){
     client = new AmazonDynamoDBAsyncClient();
-    client.setEndpoint("dynamodb.us-west-2.amazonaws.com");
+    client.setEndpoint(config.getEndpoint());
+    this.table = config.getTable();
   }
 
   @Override
@@ -70,7 +71,7 @@ public class DynamoR8portStorageService implements R8portStorageService {
 
     item.put("events", new AttributeValue().withSS(flattenEvents(r8ports)));
 
-    request.setTableName(DYNAMO_TABLE);
+    request.setTableName(this.table);
     request.setItem(item);
 
     return this.client.putItemAsync(request);
@@ -82,7 +83,7 @@ public class DynamoR8portStorageService implements R8portStorageService {
 
     UpdateItemRequest request = new UpdateItemRequest();
 
-    request.setTableName(DYNAMO_TABLE);
+    request.setTableName(this.table);
 
     Map<String, AttributeValue> key = Maps.newHashMap();
 

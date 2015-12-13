@@ -10,8 +10,11 @@ import com.nr8.analytics.r8port.config.models.KafkaConfig;
 import com.nr8.analytics.r8port.config.models.LoadReportsSparkStreamConfig;
 import com.nr8.analytics.r8port.services.dynamo.DynamoR8portStorageService;
 import kafka.admin.AdminUtils;
+import kafka.common.Topic;
+import kafka.common.TopicExistsException;
 import kafka.serializer.StringDecoder;
 import org.I0Itec.zkclient.ZkClient;
+import org.apache.commons.logging.Log;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.streaming.Durations;
@@ -93,9 +96,23 @@ public class LoadReportsSparkStream {
     return loader.getConfig(environment, "spark.load-r8ports", LoadReportsSparkStreamConfig.class).get();
   }
 
-  private static void createKafkaTopic(KafkaConfig config){
+  private static boolean createKafkaTopic(KafkaConfig config){
     ZkClient client = new ZkClient(config.getZookeepers());
+    String topicName = config.getTopicName();
+
+    if (topicName == null) {
+      System.out.println("Topic name is null, skipping topic creation.");
+      return false;
+    }
+
+    if (AdminUtils.topicExists(client, topicName)) {
+      System.out.println(String.format("Topic %s exists already, skipping creation.", topicName));
+      return false;
+    }
+
     AdminUtils.createTopic(
-        client, config.getTopicName(), config.getPartitions(), config.getReplication(), new Properties());
+            client, topicName, config.getPartitions(), config.getReplication(), new Properties());
+
+    return true;
   }
 }

@@ -26,7 +26,10 @@ public class R8portDeserializer implements JsonDeserializer<R8port> {
 
     r8port.setSid(root.getAsJsonPrimitive("sid").getAsString());
 
-    r8port.setUsername(root.getAsJsonPrimitive("username").getAsString());
+    // Username is not set when the user is not logged in.
+    if (root.has("username")) {
+      r8port.setUsername(root.getAsJsonPrimitive("username").getAsString());
+    }
 
     r8port.setUserAgent(root.getAsJsonPrimitive("userAgent").getAsString());
 

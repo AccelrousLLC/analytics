@@ -4,6 +4,7 @@ import com.nr8.analytics.r8port.config.models.KafkaConfig;
 import com.nr8.analytics.r8port.services.kafka.KafkaProducerService;
 import kafka.producer.KeyedMessage;
 import org.junit.Test;
+import static org.junit.Assert.*;
 
 public class KafkaProducerServiceTest {
   private static KafkaProducerService getKafkaService() {
@@ -22,9 +23,9 @@ public class KafkaProducerServiceTest {
     KafkaProducerService kafkaProducerService = getKafkaService();
     KeyedMessage<String, String> msg = kafkaProducerService.getMessage(key, message);
 
-    assert msg != null;
-    assert msg.key().equals(key);
-    assert msg.message().equals(message);
+    assertNotNull(msg);
+    assertEquals(key, msg.key());
+    assertEquals(message, msg.message());
   }
 
   @Test

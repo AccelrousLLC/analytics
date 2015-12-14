@@ -10,17 +10,16 @@ import com.nr8.analytics.r8port.config.models.KafkaConfig;
 import com.nr8.analytics.r8port.config.models.LoadReportsSparkStreamConfig;
 import com.nr8.analytics.r8port.services.dynamo.DynamoR8portStorageService;
 import kafka.admin.AdminUtils;
-import kafka.common.Topic;
-import kafka.common.TopicExistsException;
 import kafka.serializer.StringDecoder;
 import org.I0Itec.zkclient.ZkClient;
-import org.apache.commons.logging.Log;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaPairInputDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.streaming.kafka.KafkaUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
 import java.util.HashMap;
@@ -29,6 +28,7 @@ import java.util.List;
 import java.util.Properties;
 
 public class LoadReportsSparkStream {
+  static Logger sLogger = LoggerFactory.getLogger(LoadReportsSparkStream.class);
 
   public static void main(String[] args){
 
@@ -76,7 +76,7 @@ public class LoadReportsSparkStream {
         }
 
         storageService.appendToStorage(r8portList);
-        
+
         return keyAndValue._1();
       }
     }).print();
@@ -101,12 +101,12 @@ public class LoadReportsSparkStream {
     String topicName = config.getTopicName();
 
     if (topicName == null) {
-      System.out.println("Topic name is null, skipping topic creation.");
+      sLogger.warn("Topic name is null, skipping topic creation.");
       return false;
     }
 
     if (AdminUtils.topicExists(client, topicName)) {
-      System.out.println(String.format("Topic %s exists already, skipping creation.", topicName));
+      sLogger.warn(String.format("Topic %s exists already, skipping creation.", topicName));
       return false;
     }
 

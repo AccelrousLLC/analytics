@@ -21,11 +21,13 @@ public class LoadReportsSparkStreamConfigTest {
 
     assertTrue(config.isPresent());
 
-    Optional<KafkaConfig> kafka = config.get().getKafka().load(KafkaConfig.class);
+    Optional<KafkaConfig> kafka = config.get().getKafkaUserActivityStream().load(KafkaConfig.class);
 
     assertTrue(kafka.isPresent());
 
-    assertEquals("kafka-production.nr8.com:9092", kafka.get().getBrokers());
+    Optional<KafkaBrokerConfig> brokerConfig = kafka.get().getBroker().load(KafkaBrokerConfig.class);
+
+    assertEquals("kafka-production.nr8.com:9092", brokerConfig.get().getBrokers());
   }
 
 

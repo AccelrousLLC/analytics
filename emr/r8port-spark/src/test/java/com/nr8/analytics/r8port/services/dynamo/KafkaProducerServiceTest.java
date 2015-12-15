@@ -1,5 +1,7 @@
 package com.nr8.analytics.r8port.services.dynamo;
 
+import com.nr8.analytics.r8port.config.ConfigReference;
+import com.nr8.analytics.r8port.config.models.KafkaBrokerConfig;
 import com.nr8.analytics.r8port.config.models.KafkaConfig;
 import com.nr8.analytics.r8port.services.kafka.KafkaProducerService;
 import kafka.producer.KeyedMessage;
@@ -9,9 +11,14 @@ import static org.junit.Assert.*;
 public class KafkaProducerServiceTest {
   private static KafkaProducerService getKafkaService() {
     KafkaConfig config = new KafkaConfig();
-    config.setBrokers("localhost:9092");
-    config.setZookeepers("localhost:2181");
     config.setTopicName("session_ended");
+
+    KafkaBrokerConfig brokerConfig = new KafkaBrokerConfig();
+
+    brokerConfig.setBrokers("localhost:9092");
+    brokerConfig.setZookeepers("localhost:2181");
+
+    config.setBroker(new ConfigReference<>(brokerConfig));
 
     return new KafkaProducerService(config);
   }

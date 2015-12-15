@@ -5,13 +5,19 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.nr8.analytics.r8port.config.ConfigLoader;
 import com.nr8.analytics.r8port.config.ConfigLoaderFactory;
+import com.nr8.analytics.r8port.config.ConfigReference;
 import com.nr8.analytics.r8port.config.models.DynamoConfig;
+import com.nr8.analytics.r8port.config.models.KafkaBrokerConfig;
 import com.nr8.analytics.r8port.config.models.KafkaConfig;
 import com.nr8.analytics.r8port.config.models.LoadReportsSparkStreamConfig;
 import com.nr8.analytics.r8port.services.dynamo.DynamoR8portStorageService;
+import com.nr8.analytics.r8port.services.kafka.KafkaProducerService;
 import kafka.admin.AdminUtils;
 import kafka.serializer.StringDecoder;
+import kafka.utils.ZKStringSerializer$;
 import org.I0Itec.zkclient.ZkClient;
+import org.I0Itec.zkclient.exception.ZkMarshallingError;
+import org.I0Itec.zkclient.serialize.ZkSerializer;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.streaming.Durations;
@@ -42,9 +48,8 @@ public class LoadReportsSparkStream {
     JavaStreamingContext streamingContext =
         new JavaStreamingContext(conf, Durations.seconds(config.getBatchingWindow()));
 
-    KafkaConfig kafkaConfig = config.getKafka().load(KafkaConfig.class).get();
-
-    createKafkaTopic(kafkaConfig);
+    KafkaConfig kafkaUserActivityStreamConfig = createTopicAndReturnConfig(config.getKafkaUserActivityStream());
+    final KafkaConfig kafkaUserSessionEndConfig = createTopicAndReturnConfig(config.getKafkaUserSessionEndStream());
 
     HashSet<String> topicsSet = Sets.newHashSet();
 
@@ -52,7 +57,7 @@ public class LoadReportsSparkStream {
 
     HashMap<String, String> kafkaParams = Maps.newHashMap();
 
-    kafkaParams.put("metadata.broker.list", kafkaConfig.getBrokers());
+    kafkaParams.put("metadata.broker.list", kafkaUserActivityStreamConfig.getBroker().load(KafkaBrokerConfig.class).get().getBrokers());
 
     JavaPairInputDStream<String, String> r8ports =
         KafkaUtils.createDirectStream(
@@ -65,25 +70,42 @@ public class LoadReportsSparkStream {
       @Override
       public Object call(Tuple2<String,Iterable<String>> keyAndValue) throws Exception {
 
+        String sessionID = keyAndValue._1();
+
         DynamoR8portStorageService storageService =
             new DynamoR8portStorageService(config.getDynamo().load(DynamoConfig.class).get());
+
+        KafkaProducerService kafkaProducerService = new KafkaProducerService(kafkaUserSessionEndConfig);
 
         List<R8port> r8portList = Lists.newArrayList();
 
         for (String serializeR8port : keyAndValue._2()){
           R8port r8port = JsonUtils.deserialize(serializeR8port, R8port.class);
           r8portList.add(r8port);
+
+          sLogger.warn("Received message for component: {}", r8port.getComponent());
+
+          if (r8port.getComponent().endsWith("$socketDisconnect")){
+            kafkaProducerService.send(sessionID, sessionID);
+            sLogger.info("Socket Disconnect event detected for {}", sessionID);
+          }
         }
 
         storageService.appendToStorage(r8portList);
 
-        return keyAndValue._1();
+        return sessionID;
       }
     }).print();
 
     streamingContext.start();
 
     streamingContext.awaitTermination();
+  }
+
+  private static KafkaConfig createTopicAndReturnConfig(ConfigReference<KafkaConfig> reference){
+    KafkaConfig config = reference.load(KafkaConfig.class).get();
+    createKafkaTopic(config);
+    return config;
   }
 
   private static LoadReportsSparkStreamConfig getConfigFromArgs(String[] args){
@@ -97,7 +119,11 @@ public class LoadReportsSparkStream {
   }
 
   private static boolean createKafkaTopic(KafkaConfig config){
-    ZkClient client = new ZkClient(config.getZookeepers());
+
+    KafkaBrokerConfig brokerConfig = config.getBroker().load(KafkaBrokerConfig.class).get();
+
+    ZkClient client = new ZkClient(brokerConfig.getZookeepers(), 10000, 10000, ZKStringSerializer$.MODULE$);
+
     String topicName = config.getTopicName();
 
     if (topicName == null) {
@@ -110,8 +136,14 @@ public class LoadReportsSparkStream {
       return false;
     }
 
-    AdminUtils.createTopic(
-            client, topicName, config.getPartitions(), config.getReplication(), new Properties());
+    try {
+
+      AdminUtils.createTopic(
+          client, topicName, config.getPartitions(), config.getReplication(), new Properties());
+
+    } catch (kafka.common.TopicExistsException e){
+      sLogger.info("Topic {} already exists, ignoring...", topicName);
+    }
 
     return true;
   }

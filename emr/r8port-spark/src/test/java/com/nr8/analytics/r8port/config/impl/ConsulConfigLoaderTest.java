@@ -17,7 +17,7 @@ public class ConsulConfigLoaderTest {
 
     ConsulConfigLoader loader = new ConsulConfigLoader(uri);
 
-    Optional<KafkaConfig> optionalKC = loader.getConfig("production", "kafka", KafkaConfig.class);
+    Optional<KafkaConfig> optionalKC = loader.getConfig("production", "kafka.topics.user_activity", KafkaConfig.class);
 
     KafkaConfig kafkaConfig = optionalKC.get();
   }

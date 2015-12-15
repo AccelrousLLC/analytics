@@ -12,6 +12,12 @@ public class ConfigReference<T> implements Serializable {
   private String environment;
   private String key;
 
+  public ConfigReference(){}
+
+  public ConfigReference(T instance) {
+    this.cachedInstance = Optional.of(instance);
+  }
+
   public String getUri() {
 
     return this.uri;

@@ -1,5 +1,6 @@
 package com.nr8.analytics.r8port.services.kafka;
 
+import com.nr8.analytics.r8port.config.models.KafkaBrokerConfig;
 import com.nr8.analytics.r8port.config.models.KafkaConfig;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
@@ -16,12 +17,14 @@ public class KafkaProducerService implements Closeable {
 
   public KafkaProducerService(KafkaConfig config) {
     Properties props = new Properties();
-    props.put("metadata.broker.list", config.getBrokers());
+    String brokers = config.getBroker().load(KafkaBrokerConfig.class).get().getBrokers();
+    props.put("metadata.broker.list", brokers);
     props.put("serializer.class", "kafka.serializer.StringEncoder");
     props.put("request.required.acks", "1");
+    props.put("zookeeper.connect", "localhost:2181");
 
     ProducerConfig producerConfig = new ProducerConfig(props);
-    this.producer = new Producer<String, String>(producerConfig);
+    this.producer = new Producer<>(producerConfig);
     this.topic = config.getTopicName();
   }
 

@@ -7,7 +7,9 @@ import java.io.Serializable;
 
 public class LoadReportsSparkStreamConfig implements Serializable {
 
-  private ConfigReference<KafkaConfig> kafka;
+  private ConfigReference<KafkaConfig> kafkaUserActivityStream;
+  private ConfigReference<KafkaConfig> kafkaUserSessionEndStream;
+
   private ConfigReference<DynamoConfig> dynamo;
 
   private String r8portKafkaTopic = "user_activity";
@@ -15,12 +17,20 @@ public class LoadReportsSparkStreamConfig implements Serializable {
   private String clusterMode = "local[4]";
   private String sparkAppName = "R8portLoader";
 
-  public ConfigReference<KafkaConfig> getKafka() {
-    return kafka;
+  public ConfigReference<KafkaConfig> getKafkaUserActivityStream() {
+    return kafkaUserActivityStream;
   }
 
-  public void setKafka(ConfigReference<KafkaConfig> kafka) {
-    this.kafka = kafka;
+  public void setKafkaUserActivityStream(ConfigReference<KafkaConfig> kafkaUserActivityStream) {
+    this.kafkaUserActivityStream = kafkaUserActivityStream;
+  }
+
+  public ConfigReference<KafkaConfig> getKafkaUserSessionEndStream() {
+    return kafkaUserSessionEndStream;
+  }
+
+  public void setKafkaUserSessionEndStream(ConfigReference<KafkaConfig> kafkaUserSessionEndStream) {
+    this.kafkaUserSessionEndStream = kafkaUserSessionEndStream;
   }
 
   public String getR8portKafkaTopic() {

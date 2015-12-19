@@ -1,4 +1,4 @@
-package com.nr8.analytics.r8port.services.dynamo;
+package com.nr8.analytics.r8port.services.kafka;
 
 import com.nr8.analytics.r8port.config.ConfigReference;
 import com.nr8.analytics.r8port.config.models.KafkaBrokerConfig;

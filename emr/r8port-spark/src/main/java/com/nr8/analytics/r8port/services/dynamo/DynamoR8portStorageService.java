@@ -2,16 +2,14 @@ package com.nr8.analytics.r8port.services.dynamo;
 
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
-import com.amazonaws.services.dynamodbv2.model.UpdateItemRequest;
+import com.amazonaws.services.dynamodbv2.model.*;
 import com.google.common.collect.Maps;
 import com.nr8.analytics.r8port.JsonUtils;
 import com.nr8.analytics.r8port.R8port;
-import com.nr8.analytics.r8port.SessionLog;
 import com.nr8.analytics.r8port.config.models.DynamoConfig;
 import com.nr8.analytics.r8port.services.R8portStorageService;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -44,8 +42,11 @@ public class DynamoR8portStorageService implements R8portStorageService {
   }
 
   @Override
-  public SessionLog get(String sessionID) {
-    return null;
+  public Future<GetItemResult> get(String sessionID) {
+    Map<String, AttributeValue> key = new HashMap<>();
+    key.put("session", new AttributeValue().withS(sessionID));
+
+    return this.client.getItemAsync(new GetItemRequest(this.table, key));
   }
 
   static String[] flattenEvents(List<R8port> r8ports){

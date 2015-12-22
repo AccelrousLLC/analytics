@@ -21,7 +21,6 @@ public class KafkaProducerService implements Closeable {
     props.put("metadata.broker.list", brokers);
     props.put("serializer.class", "kafka.serializer.StringEncoder");
     props.put("request.required.acks", "1");
-    props.put("zookeeper.connect", "localhost:2181");
 
     ProducerConfig producerConfig = new ProducerConfig(props);
     this.producer = new Producer<>(producerConfig);

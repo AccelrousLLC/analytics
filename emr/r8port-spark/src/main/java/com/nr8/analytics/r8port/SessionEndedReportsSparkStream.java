@@ -82,19 +82,14 @@ public class SessionEndedReportsSparkStream {
             DynamoR8portStorageService storageService =
                 new DynamoR8portStorageService(config.getDynamoR8portStorage().load(DynamoConfig.class).get());
 
-            Future<GetItemResult> resultFuture = storageService.get(sessionID);
-
-            GetItemResult result = resultFuture.get(); // blocking
-            Map<String, AttributeValue> item = result.getItem();
-            AttributeValue eventsValue = item.get("events");
-            List<String> events = eventsValue.getSS();
+            Future<List<R8port>> result = storageService.get(sessionID);
+            List<R8port> r8ports = result.get(); // blocking
 
             DateTime startTime = null;
             DateTime endTime = null;
             String userName = null;
 
-            for (String event : events) {
-              R8port r8port = JsonUtils.deserialize(event, R8port.class);
+            for (R8port r8port : r8ports) {
               if (r8port.getComponent().endsWith("$sessionStart")) {
                 startTime = r8port.getTimestamp();
               }

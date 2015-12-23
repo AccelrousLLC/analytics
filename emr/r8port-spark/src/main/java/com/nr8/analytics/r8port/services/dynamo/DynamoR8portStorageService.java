@@ -8,11 +8,13 @@ import com.nr8.analytics.r8port.JsonUtils;
 import com.nr8.analytics.r8port.R8port;
 import com.nr8.analytics.r8port.config.models.DynamoConfig;
 import com.nr8.analytics.r8port.services.R8portStorageService;
+import org.joda.time.DateTime;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 public class DynamoR8portStorageService implements R8portStorageService {
 
@@ -42,11 +44,35 @@ public class DynamoR8portStorageService implements R8portStorageService {
   }
 
   @Override
-  public Future<GetItemResult> get(String sessionID) {
+  public Future<List<R8port>> get(String sessionID) {
     Map<String, AttributeValue> key = new HashMap<>();
     key.put("session", new AttributeValue().withS(sessionID));
 
-    return this.client.getItemAsync(new GetItemRequest(this.table, key));
+    final Future<GetItemResult> resultFuture = this.client.getItemAsync(new GetItemRequest(this.table, key));
+
+    FutureTask<List<R8port>> futureTask = new FutureTask<>(new Callable<List<R8port>>() {
+      @Override
+      public List<R8port> call() throws Exception {
+        GetItemResult result = resultFuture.get(); // blocking
+        Map<String, AttributeValue> item = result.getItem();
+        AttributeValue eventsValue = item.get("events");
+        List<String> events = eventsValue.getSS();
+        List<R8port> r8ports = new ArrayList<>(events.size());
+
+        for (String event : events) {
+          r8ports.add(JsonUtils.deserialize(event, R8port.class));
+        }
+
+        return r8ports;
+      }
+    });
+
+    // May need thread pool.
+    // Pb is that the DynamoR8portStorageService will need to be shutdown
+    // after use every time.
+    new Thread(futureTask).start();
+
+    return futureTask;
   }
 
   static String[] flattenEvents(List<R8port> r8ports){

@@ -11,5 +11,5 @@ public interface R8portStorageService {
 
   Future appendToStorage(List<R8port> r8ports);
 
-  Future<GetItemResult> get(String sessionID);
+  Future<List<R8port>> get(String sessionID);
 }

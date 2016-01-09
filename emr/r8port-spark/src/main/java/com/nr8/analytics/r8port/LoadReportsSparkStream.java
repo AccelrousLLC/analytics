@@ -16,8 +16,6 @@ import kafka.admin.AdminUtils;
 import kafka.serializer.StringDecoder;
 import kafka.utils.ZKStringSerializer$;
 import org.I0Itec.zkclient.ZkClient;
-import org.I0Itec.zkclient.exception.ZkMarshallingError;
-import org.I0Itec.zkclient.serialize.ZkSerializer;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.streaming.Durations;
@@ -28,16 +26,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class LoadReportsSparkStream {
   static Logger sLogger = LoggerFactory.getLogger(LoadReportsSparkStream.class);
+  static ExecutorService sThreadPool = Executors.newCachedThreadPool();
 
   public static void main(String[] args){
-
     final LoadReportsSparkStreamConfig config = getConfigFromArgs(args);
 
     SparkConf conf =
@@ -50,6 +49,7 @@ public class LoadReportsSparkStream {
 
     KafkaConfig kafkaUserActivityStreamConfig = createTopicAndReturnConfig(config.getKafkaUserActivityStream());
     final KafkaConfig kafkaUserSessionEndConfig = createTopicAndReturnConfig(config.getKafkaUserSessionEndStream());
+    final KafkaProducerService kafkaProducerService = new KafkaProducerService(kafkaUserSessionEndConfig);
 
     HashSet<String> topicsSet = Sets.newHashSet();
 
@@ -75,9 +75,9 @@ public class LoadReportsSparkStream {
         DynamoR8portStorageService storageService =
             new DynamoR8portStorageService(config.getDynamo().load(DynamoConfig.class).get());
 
-        KafkaProducerService kafkaProducerService = new KafkaProducerService(kafkaUserSessionEndConfig);
-
         List<R8port> r8portList = Lists.newArrayList();
+
+        ArrayList<String> sessionsEnded = new ArrayList<String>();
 
         for (String serializeR8port : keyAndValue._2()){
           R8port r8port = JsonUtils.deserialize(serializeR8port, R8port.class);
@@ -86,12 +86,16 @@ public class LoadReportsSparkStream {
           sLogger.warn("Received message for component: {}", r8port.getComponent());
 
           if (r8port.getComponent().endsWith("$socketDisconnect")){
-            kafkaProducerService.send(sessionID, sessionID);
+            sessionsEnded.add(sessionID);
             sLogger.info("Socket Disconnect event detected for {}", sessionID);
           }
         }
 
-        storageService.appendToStorage(r8portList);
+        Future result = storageService.appendToStorage(r8portList);
+
+        if (sessionsEnded.size() > 0) {
+          sThreadPool.execute(new ForwardSessionsEndTask(kafkaProducerService, result, sessionsEnded));
+        }
 
         return sessionID;
       }
@@ -146,5 +150,34 @@ public class LoadReportsSparkStream {
     }
 
     return true;
+  }
+
+  private static class ForwardSessionsEndTask implements Runnable {
+    private Future appendResult;
+    private ArrayList<String> sessionsEnded;
+    private KafkaProducerService kafkaProducerService;
+
+    public ForwardSessionsEndTask(KafkaProducerService kafkaProducerService,
+                                  Future appendResult,
+                                  ArrayList<String> sessionsEnded) {
+      this.appendResult = appendResult;
+      this.sessionsEnded = sessionsEnded;
+      this.kafkaProducerService = kafkaProducerService;
+    }
+
+    @Override
+    public void run() {
+      try {
+        appendResult.get();
+
+        for (String sessionID : sessionsEnded) {
+          kafkaProducerService.send(sessionID, sessionID);
+        }
+      } catch (ExecutionException e) {
+        sLogger.error("Error writing report to dynamo");
+      } catch (InterruptedException e) {
+        sLogger.error("Interrupted while waiting to write session ends:" + sessionsEnded);
+      }
+    }
   }
 }

@@ -10,7 +10,7 @@ public class LoadReportsSparkStreamConfig implements Serializable {
   private ConfigReference<KafkaConfig> kafkaUserActivityStream;
   private ConfigReference<KafkaConfig> kafkaUserSessionEndStream;
 
-  private ConfigReference<DynamoConfig> dynamo;
+  private ConfigReference<CassandraConfig> cassandra;
 
   private String r8portKafkaTopic = "user_activity";
   private int batchingWindow = 2;
@@ -65,11 +65,11 @@ public class LoadReportsSparkStreamConfig implements Serializable {
     this.sparkAppName = sparkAppName;
   }
 
-  public ConfigReference<DynamoConfig> getDynamo() {
-    return dynamo;
+  public ConfigReference<CassandraConfig> getCassandra() {
+    return cassandra;
   }
 
-  public void setDynamo(ConfigReference<DynamoConfig> dynamo) {
-    this.dynamo = dynamo;
+  public void setCassandra(ConfigReference<CassandraConfig> cassandra) {
+    this.cassandra = cassandra;
   }
 }

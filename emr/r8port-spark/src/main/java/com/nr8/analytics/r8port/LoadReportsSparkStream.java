@@ -72,8 +72,8 @@ public class LoadReportsSparkStream {
 
         String sessionID = keyAndValue._1();
 
-        DynamoR8portStorageService storageService =
-            new DynamoR8portStorageService(config.getDynamo().load(DynamoConfig.class).get());
+//        DynamoR8portStorageService storageService =
+//            new DynamoR8portStorageService(config.getCassandra().load(DynamoConfig.class).get());
 
         List<R8port> r8portList = Lists.newArrayList();
 
@@ -91,11 +91,11 @@ public class LoadReportsSparkStream {
           }
         }
 
-        Future result = storageService.appendToStorage(r8portList);
-
-        if (sessionsEnded.size() > 0) {
-          sThreadPool.execute(new ForwardSessionsEndTask(kafkaProducerService, result, sessionsEnded));
-        }
+//        Future result = storageService.appendToStorage(r8portList);
+//
+//        if (sessionsEnded.size() > 0) {
+//          sThreadPool.execute(new ForwardSessionsEndTask(kafkaProducerService, result, sessionsEnded));
+//        }
 
         return sessionID;
       }

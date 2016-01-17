@@ -49,7 +49,6 @@ public class LoadReportsSparkStream {
 
     KafkaConfig kafkaUserActivityStreamConfig = createTopicAndReturnConfig(config.getKafkaUserActivityStream());
     final KafkaConfig kafkaUserSessionEndConfig = createTopicAndReturnConfig(config.getKafkaUserSessionEndStream());
-    final KafkaProducerService kafkaProducerService = new KafkaProducerService(kafkaUserSessionEndConfig);
 
     HashSet<String> topicsSet = Sets.newHashSet();
 
@@ -70,6 +69,7 @@ public class LoadReportsSparkStream {
       @Override
       public Object call(Tuple2<String,Iterable<String>> keyAndValue) throws Exception {
 
+        KafkaProducerService kafkaProducerService = new KafkaProducerService(kafkaUserSessionEndConfig);
         String sessionID = keyAndValue._1();
 
 //        DynamoR8portStorageService storageService =

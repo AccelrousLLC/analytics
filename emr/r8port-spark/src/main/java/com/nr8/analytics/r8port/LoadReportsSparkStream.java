@@ -6,10 +6,8 @@ import com.google.common.collect.Sets;
 import com.nr8.analytics.r8port.config.ConfigLoader;
 import com.nr8.analytics.r8port.config.ConfigLoaderFactory;
 import com.nr8.analytics.r8port.config.ConfigReference;
-import com.nr8.analytics.r8port.config.models.DynamoConfig;
-import com.nr8.analytics.r8port.config.models.KafkaBrokerConfig;
-import com.nr8.analytics.r8port.config.models.KafkaConfig;
-import com.nr8.analytics.r8port.config.models.LoadReportsSparkStreamConfig;
+import com.nr8.analytics.r8port.config.models.*;
+import com.nr8.analytics.r8port.services.cassandra.CassandraR8portStorageService;
 import com.nr8.analytics.r8port.services.dynamo.DynamoR8portStorageService;
 import com.nr8.analytics.r8port.services.kafka.KafkaProducerService;
 import kafka.admin.AdminUtils;
@@ -33,63 +31,62 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class LoadReportsSparkStream {
-  static Logger sLogger = LoggerFactory.getLogger(LoadReportsSparkStream.class);
-  static ExecutorService sThreadPool = Executors.newCachedThreadPool();
+  private static Logger sLogger = LoggerFactory.getLogger(LoadReportsSparkStream.class);
+  private static ExecutorService sThreadPool = Executors.newCachedThreadPool();
 
   public static void main(String[] args){
     final LoadReportsSparkStreamConfig config = getConfigFromArgs(args);
 
-    SparkConf conf =
-        new SparkConf()
-              .setMaster(config.getClusterMode())
-              .setAppName(config.getSparkAppName());
+    SparkConf conf = new SparkConf()
+        .setMaster(config.getClusterMode())
+        .setAppName(config.getSparkAppName());
 
     JavaStreamingContext streamingContext =
         new JavaStreamingContext(conf, Durations.seconds(config.getBatchingWindow()));
 
     KafkaConfig kafkaUserActivityStreamConfig = createTopicAndReturnConfig(config.getKafkaUserActivityStream());
     final KafkaConfig kafkaUserSessionEndConfig = createTopicAndReturnConfig(config.getKafkaUserSessionEndStream());
+    final CassandraR8portStorageService storageService = new CassandraR8portStorageService(
+        config.getCassandra().load(CassandraConfig.class).get());
 
     HashSet<String> topicsSet = Sets.newHashSet();
-
     topicsSet.add(config.getR8portKafkaTopic());
-
     HashMap<String, String> kafkaParams = Maps.newHashMap();
-
-    kafkaParams.put("metadata.broker.list", kafkaUserActivityStreamConfig.getBroker().load(KafkaBrokerConfig.class).get().getBrokers());
+    kafkaParams.put("metadata.broker.list",
+        kafkaUserActivityStreamConfig.getBroker().load(KafkaBrokerConfig.class).get().getBrokers());
 
     JavaPairInputDStream<String, String> r8ports =
         KafkaUtils.createDirectStream(
             streamingContext,
             String.class, String.class, StringDecoder.class, StringDecoder.class, kafkaParams, topicsSet);
 
+
     r8ports
         .groupByKey()
         .map(new Function<Tuple2<String,Iterable<String>>, Object>() {
-      @Override
-      public Object call(Tuple2<String,Iterable<String>> keyAndValue) throws Exception {
+          @Override
+          public Object call(Tuple2<String,Iterable<String>> keyAndValue) throws Exception {
+            KafkaProducerService kafkaProducerService = new KafkaProducerService(kafkaUserSessionEndConfig);
+            String sessionID = keyAndValue._1();
 
-        KafkaProducerService kafkaProducerService = new KafkaProducerService(kafkaUserSessionEndConfig);
-        String sessionID = keyAndValue._1();
+    //        DynamoR8portStorageService storageService =
+    //            new DynamoR8portStorageService(config.getCassandra().load(DynamoConfig.class).get());
 
-//        DynamoR8portStorageService storageService =
-//            new DynamoR8portStorageService(config.getCassandra().load(DynamoConfig.class).get());
+            List<R8port> r8portList = Lists.newArrayList();
 
-        List<R8port> r8portList = Lists.newArrayList();
+            ArrayList<String> sessionsEnded = new ArrayList<String>();
 
-        ArrayList<String> sessionsEnded = new ArrayList<String>();
+            for (String serializeR8port : keyAndValue._2()) {
+              R8port r8port = JsonUtils.deserialize(serializeR8port, R8port.class);
+              r8portList.add(r8port);
 
-        for (String serializeR8port : keyAndValue._2()){
-          R8port r8port = JsonUtils.deserialize(serializeR8port, R8port.class);
-          r8portList.add(r8port);
+              sLogger.warn("Received message for component: {}", r8port.getComponent());
 
-          sLogger.warn("Received message for component: {}", r8port.getComponent());
-
-          if (r8port.getComponent().endsWith("$socketDisconnect")){
-            sessionsEnded.add(sessionID);
-            sLogger.info("Socket Disconnect event detected for {}", sessionID);
-          }
-        }
+              if (r8port.getComponent().endsWith("$socketDisconnect")){
+                sessionsEnded.add(sessionID);
+                sLogger.warn("Socket Disconnect event detected for {}", sessionID);
+              }
+            }
 
 //        Future result = storageService.appendToStorage(r8portList);
 //
@@ -102,7 +99,6 @@ public class LoadReportsSparkStream {
     }).print();
 
     streamingContext.start();
-
     streamingContext.awaitTermination();
   }
 
@@ -146,7 +142,7 @@ public class LoadReportsSparkStream {
           client, topicName, config.getPartitions(), config.getReplication(), new Properties());
 
     } catch (kafka.common.TopicExistsException e){
-      sLogger.info("Topic {} already exists, ignoring...", topicName);
+      sLogger.warn("Topic {} already exists, ignoring...", topicName);
     }
 
     return true;

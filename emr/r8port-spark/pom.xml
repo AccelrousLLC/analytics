@@ -16,7 +16,7 @@
     <cdap.version>3.2.1</cdap.version>
     <spark.core.version>1.5.2</spark.core.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <guava.version>13.0.1</guava.version>
+    <guava.version>16.0.1</guava.version>
     <gson.version>2.2.4</gson.version>
     <hadoop.version>2.3.0</hadoop.version>
     <aws.version>1.10.0</aws.version>
@@ -46,7 +46,7 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>
       <version>${cdap.version}</version>
-     <scope>provided</scope>
+     <!--<scope>provided</scope>-->
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -70,7 +70,7 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-streaming_2.10</artifactId>
       <version>${spark.core.version}</version>
-      <scope>provided</scope>
+      <!--<scope>provided</scope>-->
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -82,7 +82,7 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-streaming-kafka_2.10</artifactId>
       <version>${spark.core.version}</version>
-      <scope>provided</scope>
+      <!--<scope>provided</scope>-->
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -94,19 +94,19 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
-      <scope>provided</scope>
+      <!--<scope>provided</scope>-->
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
-      <scope>provided</scope>
+      <!--<scope>provided</scope>-->
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
       <version>${gson.version}</version>
-      <scope>provided</scope>
+      <!--<scope>provided</scope>-->
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -244,6 +244,27 @@
         </exclusion>
       </exclusions>
     </dependency>
+
+    <dependency>
+      <groupId>com.datastax.cassandra</groupId>
+      <artifactId>cassandra-driver-core</artifactId>
+      <version>3.0.0-rc1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.datastax.spark</groupId>
+      <artifactId>spark-cassandra-connector_2.10</artifactId>
+      <version>1.4.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cassandra</groupId>
+      <artifactId>cassandra-thrift</artifactId>
+      <version>3.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cassandra</groupId>
+      <artifactId>cassandra-clientutil</artifactId>
+      <version>3.2</version>
+    </dependency>
   </dependencies>
   <build>
     <pluginManagement>
@@ -295,7 +316,26 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <version>2.3.7</version>
+        <version>2.4.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.6</version>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+        <executions>
+          <execution>
+            <id>assemble-all</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

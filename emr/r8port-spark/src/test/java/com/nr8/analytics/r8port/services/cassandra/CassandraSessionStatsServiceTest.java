@@ -4,11 +4,7 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.datastax.spark.connector.cql.Schema;
-import com.google.gson.JsonObject;
-import com.nr8.analytics.r8port.JsonUtils;
 import com.nr8.analytics.r8port.Nr8SessionStats;
-import com.nr8.analytics.r8port.R8port;
 import com.nr8.analytics.r8port.config.models.CassandraConfig;
 import org.joda.time.DateTime;
 import org.junit.*;
@@ -16,8 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.Future;
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.*;
 
@@ -83,7 +79,7 @@ public class CassandraSessionStatsServiceTest {
     DateTime startTime = new DateTime();
     DateTime endTime = new DateTime();
     String username = "test_user";
-    
+
     Nr8SessionStats stats = new Nr8SessionStats(sessionId, startTime, endTime, username);
     this.sessionStatsService.put(stats).get();
 

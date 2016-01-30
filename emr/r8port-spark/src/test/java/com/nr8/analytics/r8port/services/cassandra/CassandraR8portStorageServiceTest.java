@@ -20,7 +20,7 @@ public class CassandraR8portStorageServiceTest {
   private static Logger sLogger = LoggerFactory.getLogger(CassandraR8portStorageServiceTest.class);
   private static final String END_POINT = "127.0.0.1";
   private static final String KEYSPACE = "reports_test";
-  private static final String TABLE = "r8ports_test";
+  private static final String TABLE = "r8ports";
   private static final String KEYSPACE_TABLE = KEYSPACE + "." + TABLE;
 
   private static final String CREATE_KEYSPACE = "CREATE KEYSPACE " + KEYSPACE

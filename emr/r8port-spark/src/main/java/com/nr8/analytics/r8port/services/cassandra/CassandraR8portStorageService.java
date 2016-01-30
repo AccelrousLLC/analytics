@@ -65,8 +65,8 @@ public class CassandraR8portStorageService implements R8portStorageService, Clos
       up.with(QueryBuilder.append("events", JsonUtils.serialize(r8port)));
     }
 
-    up.where(QueryBuilder.eq("session", UUID.fromString(recordId)));
-    up.setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+    up.where(QueryBuilder.eq("session", UUID.fromString(recordId)))
+        .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
 
     return this.session.executeAsync(up);
   }
@@ -77,8 +77,9 @@ public class CassandraR8portStorageService implements R8portStorageService, Clos
         .select()
         .all()
         .from(this.table)
-        .where(QueryBuilder.eq("session", UUID.fromString(sessionID)));
-    stmt.setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+        .where(QueryBuilder.eq("session", UUID.fromString(sessionID)))
+        .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+
     final ResultSetFuture resultSetFuture = this.session.executeAsync(stmt);
 
     FutureTask<List<R8port>> result = new FutureTask<>(new Callable<List<R8port>>() {
@@ -100,18 +101,5 @@ public class CassandraR8portStorageService implements R8portStorageService, Clos
     this.threadPool.execute(result);
 
     return result;
-  }
-
-  private static String[] flattenEvents(List<R8port> r8ports) {
-
-    String[] events = new String[r8ports.size()];
-
-    int count = -1;
-
-    for (R8port r8port : r8ports){
-      events[++count] = JsonUtils.serialize(r8port);
-    }
-
-    return events;
   }
 }

@@ -2,7 +2,9 @@ package com.nr8.analytics.r8port.services.dynamo;
 
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient;
-import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
+import com.amazonaws.services.dynamodbv2.model.PutItemResult;
 import com.nr8.analytics.r8port.Nr8SessionStats;
 import com.nr8.analytics.r8port.config.models.DynamoConfig;
 import org.joda.time.format.DateTimeFormatter;

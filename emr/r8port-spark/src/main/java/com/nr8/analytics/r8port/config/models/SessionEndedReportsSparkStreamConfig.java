@@ -9,8 +9,8 @@ public class SessionEndedReportsSparkStreamConfig implements Serializable {
 
   private ConfigReference<KafkaConfig> kafkaUserSessionEndStream;
 
-  private ConfigReference<DynamoConfig> dynamoR8portStorage;
-  private ConfigReference<DynamoConfig> dynamoSessionStats;
+  private ConfigReference<CassandraConfig> cassandraR8portStorage;
+  private ConfigReference<CassandraConfig> cassandraSessionStats;
 
   private int batchingWindow = 2;
   private String clusterMode = "local[4]";
@@ -48,19 +48,19 @@ public class SessionEndedReportsSparkStreamConfig implements Serializable {
     this.sparkAppName = sparkAppName;
   }
 
-  public ConfigReference<DynamoConfig> getDynamoR8portStorage() {
-    return dynamoR8portStorage;
+  public ConfigReference<CassandraConfig> getCassandraR8portStorage() {
+    return cassandraR8portStorage;
   }
 
-  public void setDynamoR8portStorage(ConfigReference<DynamoConfig> dynamoR8portStorage) {
-    this.dynamoR8portStorage = dynamoR8portStorage;
+  public void setCassandraR8portStorage(ConfigReference<CassandraConfig> cassandraR8portStorage) {
+    this.cassandraR8portStorage = cassandraR8portStorage;
   }
 
-  public ConfigReference<DynamoConfig> getDynamoSessionStats() {
-    return dynamoSessionStats;
+  public ConfigReference<CassandraConfig> getCassandraSessionStats() {
+    return cassandraSessionStats;
   }
 
-  public void setDynamoSessionStats(ConfigReference<DynamoConfig> dynamoSessionStats) {
-    this.dynamoSessionStats= dynamoSessionStats;
+  public void setCassandraSessionStats(ConfigReference<CassandraConfig> cassandraSessionStats) {
+    this.cassandraSessionStats= cassandraSessionStats;
   }
 }

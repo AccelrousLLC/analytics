@@ -1,19 +1,13 @@
 package com.nr8.analytics.r8port;
 
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.GetItemResult;
-import com.amazonaws.services.dynamodbv2.model.PutItemResult;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.nr8.analytics.r8port.config.ConfigLoader;
 import com.nr8.analytics.r8port.config.ConfigLoaderFactory;
 import com.nr8.analytics.r8port.config.ConfigReference;
-import com.nr8.analytics.r8port.config.models.DynamoConfig;
-import com.nr8.analytics.r8port.config.models.KafkaBrokerConfig;
-import com.nr8.analytics.r8port.config.models.KafkaConfig;
-import com.nr8.analytics.r8port.config.models.SessionEndedReportsSparkStreamConfig;
-import com.nr8.analytics.r8port.services.dynamo.DynamoR8portStorageService;
-import com.nr8.analytics.r8port.services.dynamo.DynamoSessionStatsService;
+import com.nr8.analytics.r8port.config.models.*;
+import com.nr8.analytics.r8port.services.cassandra.CassandraR8portStorageService;
+import com.nr8.analytics.r8port.services.cassandra.CassandraSessionStatsService;
 import kafka.admin.AdminUtils;
 import kafka.serializer.StringDecoder;
 import kafka.utils.ZKStringSerializer$;
@@ -29,7 +23,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.Future;
 
 public class SessionEndedReportsSparkStream {
@@ -79,8 +76,8 @@ public class SessionEndedReportsSparkStream {
                   "More than one (%d) session end messages detected for session id %s", msgCnt, sessionID));
             }
 
-            DynamoR8portStorageService storageService =
-                new DynamoR8portStorageService(config.getDynamoR8portStorage().load(DynamoConfig.class).get());
+            CassandraR8portStorageService storageService =
+                new CassandraR8portStorageService(config.getCassandraR8portStorage().load(CassandraConfig.class).get());
 
             Future<List<R8port>> result = storageService.get(sessionID);
             List<R8port> r8ports = result.get(); // blocking
@@ -111,8 +108,8 @@ public class SessionEndedReportsSparkStream {
             }
 
             Nr8SessionStats session = new Nr8SessionStats(sessionID, startTime, endTime, userName);
-            DynamoSessionStatsService sessionStatsService =
-                new DynamoSessionStatsService(config.getDynamoSessionStats().load(DynamoConfig.class).get());
+            CassandraSessionStatsService sessionStatsService =
+                new CassandraSessionStatsService(config.getCassandraSessionStats().load(CassandraConfig.class).get());
             sessionStatsService.put(session);
 
             return sessionID;

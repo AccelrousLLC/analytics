@@ -69,8 +69,8 @@ public class LoadReportsSparkStream {
             KafkaProducerService kafkaProducerService = new KafkaProducerService(kafkaUserSessionEndConfig);
             String sessionID = keyAndValue._1();
 
-    //        DynamoR8portStorageService storageService =
-    //            new DynamoR8portStorageService(config.getCassandra().load(DynamoConfig.class).get());
+            CassandraR8portStorageService storageService =
+                new CassandraR8portStorageService(config.getCassandra().load(CassandraConfig.class).get());
 
             List<R8port> r8portList = Lists.newArrayList();
 
@@ -88,15 +88,15 @@ public class LoadReportsSparkStream {
               }
             }
 
-//        Future result = storageService.appendToStorage(r8portList);
-//
-//        if (sessionsEnded.size() > 0) {
-//          sThreadPool.execute(new ForwardSessionsEndTask(kafkaProducerService, result, sessionsEnded));
-//        }
+            Future result = storageService.appendToStorage(r8portList);
 
-        return sessionID;
-      }
-    }).print();
+            if (sessionsEnded.size() > 0) {
+              sThreadPool.execute(new ForwardSessionsEndTask(kafkaProducerService, result, sessionsEnded));
+            }
+
+            return sessionID;
+          }
+        }).print();
 
     streamingContext.start();
     streamingContext.awaitTermination();

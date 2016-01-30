@@ -2,14 +2,12 @@ package com.nr8.analytics.r8port.services.cassandra;
 
 
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.querybuilder.Clause;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.datastax.driver.core.querybuilder.Update;
 import com.nr8.analytics.r8port.JsonUtils;
 import com.nr8.analytics.r8port.R8port;
 import com.nr8.analytics.r8port.config.models.CassandraConfig;
 import com.nr8.analytics.r8port.services.R8portStorageService;
-import org.apache.avro.generic.GenericData;
-import org.mortbay.thread.ThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +15,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.*;
 
@@ -26,6 +25,7 @@ public class CassandraR8portStorageService implements R8portStorageService, Clos
   private String table;
   private Cluster cluster;
   private Session session;
+  private static final boolean DEBUG = false;
 
   public CassandraR8portStorageService(CassandraConfig config){
     this.table = config.getTable();
@@ -35,15 +35,14 @@ public class CassandraR8portStorageService implements R8portStorageService, Clos
         .build();
     this.session = this.cluster.connect(config.getKeyspace());
 
-    // Debug.
-/*
-    Metadata metadata = cluster.getMetadata();
-    sLogger.warn(String.format("Connected to cluster: %s\n", metadata.getClusterName()));
-    for (Host host: metadata.getAllHosts()) {
-      sLogger.warn(String.format("Datacenter: %s; Host: %s; Rack: %s\n",
-          host.getDatacenter(), host.getAddress(), host.getRack()));
+    if (DEBUG) {
+      Metadata metadata = cluster.getMetadata();
+      sLogger.warn(String.format("Connected to cluster: %s\n", metadata.getClusterName()));
+      for (Host host : metadata.getAllHosts()) {
+        sLogger.warn(String.format("Datacenter: %s; Host: %s; Rack: %s\n",
+            host.getDatacenter(), host.getAddress(), host.getRack()));
+      }
     }
-*/
   }
 
   @Override
@@ -58,18 +57,18 @@ public class CassandraR8portStorageService implements R8portStorageService, Clos
 
   @Override
   public Future appendToStorage(List<R8port> r8ports) {
+    String recordId = r8ports.get(0).getRecordId();
+    Update up = QueryBuilder
+        .update(this.table);
 
-    boolean isStartOfSession = false;
-
-    for (R8port r8port : r8ports){
-      if (r8port.getComponent().endsWith("$sessionStart")){
-        isStartOfSession = true;
-        break;
-      }
+    for (R8port r8port : r8ports) {
+      up.with(QueryBuilder.append("events", JsonUtils.serialize(r8port)));
     }
 
-    if (isStartOfSession) return putRecords(r8ports);
-    return updateRecords(r8ports);
+    up.where(QueryBuilder.eq("session", UUID.fromString(recordId)));
+    up.setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+
+    return this.session.executeAsync(up);
   }
 
   @Override
@@ -89,9 +88,9 @@ public class CassandraR8portStorageService implements R8portStorageService, Clos
         ResultSet resultSet = resultSetFuture.get();
 
         for (Row row : resultSet) {
-          R8port[] rs = JsonUtils.deserialize(row.get("events", String.class), R8port[].class);
-          for (R8port r : rs) {
-            r8ports.add(r);
+          Set<String> events = row.getSet("events", String.class);
+          for (String event : events) {
+            r8ports.add(JsonUtils.deserialize(event, R8port.class));
           }
         }
         return r8ports;
@@ -114,46 +113,5 @@ public class CassandraR8portStorageService implements R8portStorageService, Clos
     }
 
     return events;
-  }
-
-  protected Future putRecords(List<R8port> r8ports) {
-    String recordId = r8ports.get(0).getRecordId();
-    String events = JsonUtils.serialize(r8ports);
-    Statement stmt = QueryBuilder
-        .insertInto(this.table)
-        .value("session", UUID.fromString(recordId))
-        .value("events", events);
-    stmt.setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
-    return this.session.executeAsync(stmt);
-  }
-
-  protected Future updateRecords(List<R8port> r8ports) {
-    return new FutureTask<List<R8port>>(new Callable<List<R8port>>() {
-      @Override
-      public List<R8port> call() throws Exception {
-        return null;
-      }
-    });
-//    UpdateItemRequest request = new UpdateItemRequest();
-//    request.setTableName(this.table);
-//
-//    AttributeValue sessionAttribute = new AttributeValue().withS(r8ports.get(0).getRecordId());
-//    Map<String, AttributeValue> key = Maps.newHashMap();
-//    key.put("session", sessionAttribute);
-//    request.setKey(key);
-//
-//    Map<String, String> expressionAttributeNames = Maps.newHashMap();
-//    expressionAttributeNames.put("#E", "events");
-//    request.setExpressionAttributeNames(expressionAttributeNames);
-//
-//    Map<String, AttributeValue> expressionAttributeValues = Maps.newHashMap();
-//    AttributeValue events = new AttributeValue().withSS(flattenEvents(r8ports));
-//    expressionAttributeValues.put(":events", events);
-//    request.setExpressionAttributeValues(expressionAttributeValues);
-//
-//    String updateExpression = "ADD #E :events";
-//    request.setUpdateExpression(updateExpression);
-//
-//    return this.client.updateItemAsync(request);
   }
 }

@@ -29,7 +29,7 @@ public class CassandraSessionStatsServiceTest {
   private static final String DROP_KEYSPACE = "DROP KEYSPACE " + KEYSPACE;
 
   private static final String CREATE_TABLE = "CREATE TABLE " + KEYSPACE_TABLE
-      + "(session uuid PRIMARY KEY, timestamp timestamp, duration bigint, username text);";
+      + "(session uuid, timestamp timestamp, duration bigint, username text, PRIMARY KEY (username, timestamp));";
   private static final String DROP_TABLE = "DROP TABLE " + KEYSPACE_TABLE + ";";
 
   private static Cluster sCluster;

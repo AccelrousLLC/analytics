@@ -38,8 +38,8 @@ public class SessionEndedReportsSparkStream {
 
     SparkConf conf =
         new SparkConf()
-              .setMaster(config.getClusterMode())
-              .setAppName(config.getSparkAppName());
+            .setMaster(config.getClusterMode())
+            .setAppName(config.getSparkAppName());
 
     JavaStreamingContext streamingContext =
         new JavaStreamingContext(conf, Durations.seconds(config.getBatchingWindow()));

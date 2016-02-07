@@ -77,8 +77,7 @@ public class LoadReportsSparkStream {
             String sessionID = keyAndValue._1();
 
             CassandraR8portStorageService storageService =
-                new CassandraR8portStorageService(config.getCassandra().load(CassandraConfig.class).g
-                    et());
+                new CassandraR8portStorageService(config.getCassandra().load(CassandraConfig.class).get());
 
             List<R8port> r8portList = Lists.newArrayList();
 

@@ -4,6 +4,8 @@ package com.nr8.analytics.r8port.config.models;
 import com.nr8.analytics.r8port.config.ConfigReference;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 public class LoadReportsSparkStreamConfig implements Serializable {
 
@@ -16,6 +18,7 @@ public class LoadReportsSparkStreamConfig implements Serializable {
   private int batchingWindow = 2;
   private String clusterMode = "local[4]";
   private String sparkAppName = "R8portLoader";
+  private Map<String, String> sparkConf = new HashMap<>();
 
   public ConfigReference<KafkaConfig> getKafkaUserActivityStream() {
     return kafkaUserActivityStream;
@@ -63,6 +66,14 @@ public class LoadReportsSparkStreamConfig implements Serializable {
 
   public void setSparkAppName(String sparkAppName) {
     this.sparkAppName = sparkAppName;
+  }
+
+  public Map<String, String> getSparkConf() {
+    return this.sparkConf;
+  }
+
+  public void setSparkConf(Map<String, String> sparkConf) {
+    this.sparkConf = sparkConf;
   }
 
   public ConfigReference<CassandraConfig> getCassandra() {

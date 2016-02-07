@@ -41,6 +41,13 @@ public class LoadReportsSparkStream {
         .setMaster(config.getClusterMode())
         .setAppName(config.getSparkAppName());
 
+    Map<String, String> sparkConf = config.getSparkConf();
+    Iterator<Map.Entry<String, String>> it = sparkConf.entrySet().iterator();
+    while (it.hasNext()) {
+      Map.Entry<String, String> confEntry = it.next();
+      conf.set(confEntry.getKey(), confEntry.getValue());
+    }
+
     JavaStreamingContext streamingContext =
         new JavaStreamingContext(conf, Durations.seconds(config.getBatchingWindow()));
 
@@ -70,7 +77,8 @@ public class LoadReportsSparkStream {
             String sessionID = keyAndValue._1();
 
             CassandraR8portStorageService storageService =
-                new CassandraR8portStorageService(config.getCassandra().load(CassandraConfig.class).get());
+                new CassandraR8portStorageService(config.getCassandra().load(CassandraConfig.class).g
+                    et());
 
             List<R8port> r8portList = Lists.newArrayList();
 

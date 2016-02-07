@@ -23,10 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.Future;
 
 public class SessionEndedReportsSparkStream {
@@ -40,6 +37,13 @@ public class SessionEndedReportsSparkStream {
         new SparkConf()
             .setMaster(config.getClusterMode())
             .setAppName(config.getSparkAppName());
+
+    Map<String, String> sparkConf = config.getSparkConf();
+    Iterator<Map.Entry<String, String>> it = sparkConf.entrySet().iterator();
+    while (it.hasNext()) {
+      Map.Entry<String, String> confEntry = it.next();
+      conf.set(confEntry.getKey(), confEntry.getValue());
+    }
 
     JavaStreamingContext streamingContext =
         new JavaStreamingContext(conf, Durations.seconds(config.getBatchingWindow()));

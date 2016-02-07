@@ -87,7 +87,10 @@ public class ConsulConfigLoader implements ConfigLoader {
   static HttpClient createHttpClient(Map<String, String> params){
     HttpClient client = new HttpClient();
     if (params.containsKey("username") && params.containsKey("password")){
-      String realm = params.getOrDefault("realm", "nr8");
+      String realm = params.get("realm");
+      if (realm == null) {
+        realm = "nr8";
+      }
       client.getState().setCredentials(
           new AuthScope(params.get("hostname"), Integer.parseInt(params.get("port")), realm),
           new UsernamePasswordCredentials(params.get("username"), params.get("password"))
